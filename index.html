@@ -1,0 +1,2867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinema & Sound | CINAPSE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1a1612;
+            background-image: url('newspaper-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-blend-mode: multiply;
+            color: #c4b5a0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+            cursor: crosshair;
+        }
+        /* Page Transition Animations */
+        .page-transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1612;
+            z-index: 9998;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        
+        .page-transition-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        /* Film strip transition effect */
+        .page-transition-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                #d4906f 0px,
+                #d4906f 20px,
+                transparent 20px,
+                transparent 40px
+            );
+            opacity: 0.3;
+            animation: filmStrip 0.6s ease-out forwards;
+        }
+        
+        @keyframes filmStrip {
+            to {
+                left: 100%;
+            }
+        }
+        
+        /* Fade and slide animations for sections */
+        #landingSection,
+        #resultsSection,
+        #archiveSection,
+        #manifestoSection,
+        #loadingSection {
+            animation: fadeSlideIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Section-specific animations */
+        #archiveSection.active {
+            animation: archiveEnter 0.8s ease-out;
+        }
+        
+        @keyframes archiveEnter {
+            from {
+                opacity: 0;
+                transform: translateX(-50px) rotateY(-5deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) rotateY(0);
+            }
+        }
+        
+        #manifestoSection.active {
+            animation: manifestoEnter 0.8s ease-out;
+        }
+        
+        @keyframes manifestoEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        #resultsSection.active {
+            animation: resultsEnter 0.8s ease-out;
+        }
+        
+        @keyframes resultsEnter {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Card stagger animation */
+        .card, .news-card {
+            animation: cardFadeIn 0.6s ease-out backwards;
+        }
+        
+        .card:nth-child(1), .news-card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2), .news-card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3), .news-card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4), .news-card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5), .news-card:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(6), .news-card:nth-child(6) { animation-delay: 0.6s; }
+        .card:nth-child(7), .news-card:nth-child(7) { animation-delay: 0.7s; }
+        .card:nth-child(8), .news-card:nth-child(8) { animation-delay: 0.8s; }
+        .card:nth-child(9), .news-card:nth-child(9) { animation-delay: 0.9s; }
+        .card:nth-child(10), .news-card:nth-child(10) { animation-delay: 1s; }
+        .card:nth-child(11), .news-card:nth-child(11) { animation-delay: 1.1s; }
+        .card:nth-child(12), .news-card:nth-child(12) { animation-delay: 1.2s; }
+        
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii45NSIgbnVtT2N0YXZlcz0iNSIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdmFsdWVzPSIwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAxIDAiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuNyIvPjwvc3ZnPg==');
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 1;
+            animation: grain 0.5s steps(6) infinite;
+        }
+        
+        @keyframes grain {
+            0%, 100% { transform: translate(0, 0); }
+            16% { transform: translate(-1%, -1%); }
+            33% { transform: translate(1%, 1%); }
+            50% { transform: translate(-1%, 1%); }
+            66% { transform: translate(1%, -1%); }
+            83% { transform: translate(-0.5%, 0.5%); }
+        }
+        
+        .flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        .flash-overlay::before {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: radial-gradient(circle, 
+                rgba(255, 255, 255, 1) 0%, 
+                rgba(255, 255, 255, 0.9) 40%, 
+                rgba(255, 255, 255, 0) 100%);
+            left: var(--x);
+            top: var(--y);
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+        }
+        
+        .flash-overlay.active::before {
+            animation: snapFlash 0.25s ease-out;
+        }
+        
+        @keyframes snapFlash {
+            0% { 
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            30% { 
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% { 
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+        }
+        
+        * {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 4rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .vintage-time {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: #d4906f;
+            text-transform: uppercase;
+            padding: 0.5rem 1.5rem;
+            background: rgba(212, 144, 111, 0.1);
+            border: 1px solid rgba(212, 144, 111, 0.3);
+            border-radius: 0.25rem;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #c4b5a0;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+    
+        
+        .logo:hover {
+            color: #d4906f;
+        }
+        
+        .logo::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #d4906f;
+            border-radius: 50%;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: #8a7d6f;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+
+        }
+        
+        .nav-links a:hover {
+            color: #d4906f;
+        }
+        
+        /* Hero Section */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            width: 100%;
+        }
+        
+        #landingSection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            flex: 1;
+        }
+        
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            background: rgba(212, 144, 111, 0.05);
+            border-top: 1px solid rgba(212, 144, 111, 0.2);
+            border-bottom: 1px solid rgba(212, 144, 111, 0.2);
+            padding: 1rem 0;
+            margin-bottom: 3rem;
+        }
+        
+        .marquee {
+            display: flex;
+            animation: scroll 25s linear infinite;
+            white-space: nowrap;
+        }
+        
+        .marquee-content {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+            padding: 0 3rem;
+        }
+        
+        .marquee-item {
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #d4906f;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .marquee-item::before {
+            content: '◆';
+            color: rgba(212, 144, 111, 0.5);
+        }
+        
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 8rem;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        
+        .title-cinema {
+            color: #e8dcc8;
+        }
+        
+        .title-ampersand {
+            font-size: 5rem;
+            color: #8a7d6f;
+            font-style: italic;
+            font-weight: 400;
+            display: block;
+            margin: -1rem 0;
+        }
+        
+        .title-sound {
+            color: #d4906f;
+        }
+        
+        .subtitle {
+            text-align: center;
+            max-width: 600px;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #8a7d6f;
+            margin-bottom: 4rem;
+        }
+        
+        /* Form Card */
+        .form-card {
+            background: rgba(30, 26, 22, 0.6);
+            border: 1px solid rgba(212, 144, 111, 0.2);
+            border-radius: 1rem;
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 1.2rem;
+            color: #8a7d6f;
+            font-size: 1.1rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 1.2rem 1.2rem 1.2rem 3.5rem;
+            background: rgba(15, 13, 10, 0.8);
+            border: 1px solid rgba(212, 144, 111, 0.2);
+            border-radius: 0.5rem;
+            color: #c4b5a0;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        input::placeholder {
+            color: #5a5047;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #d4906f;
+            background: rgba(15, 13, 10, 0.95);
+        }
+        
+        .remove-btn {
+            padding: 0.8rem 1rem;
+            background: rgba(212, 144, 111, 0.2);
+            border: 1px solid rgba(212, 144, 111, 0.3);
+            border-radius: 0.5rem;
+            color: #d4906f;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .remove-btn:hover {
+            background: rgba(212, 144, 111, 0.3);
+            border-color: #d4906f;
+        }
+        
+        .add-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: transparent;
+            border: 1px dashed rgba(212, 144, 111, 0.3);
+            border-radius: 0.5rem;
+            color: #8a7d6f;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+        
+        .add-btn:hover {
+            border-color: #d4906f;
+            color: #d4906f;
+            background: rgba(212, 144, 111, 0.05);
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            color: #5a5047;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+        
+        button {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #d4906f 0%, #c17f5e 100%);
+            border: none;
+            border-radius: 0.5rem;
+            color: #1a1612;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 144, 111, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #5a5047;
+        }
+        
+        /* Loading Section */
+        #loadingSection {
+            display: none;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        
+        #loadingSection.active {
+            display: block;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(212, 144, 111, 0.2);
+            border-top-color: #d4906f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: #8a7d6f;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Results Section */
+        #resultsSection {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            margin: 0 auto;
+        }
+        
+        #resultsSection.active {
+            display: block;
+        }
+        
+        .results-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .results-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3rem;
+            color: #e8dcc8;
+            margin-bottom: 1rem;
+        }
+        
+        .category {
+            margin-bottom: 3rem;
+        }
+        
+        .category h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            color: #d4906f;
+            margin-bottom: 1.5rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        
+        .card {
+            background: rgba(30, 26, 22, 0.6);
+            border: 1px solid rgba(212, 144, 111, 0.2);
+            border-radius: 1rem;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(212, 144, 111, 0.5);
+            box-shadow: 0 10px 30px rgba(212, 144, 111, 0.2);
+        }
+        
+        .card-poster {
+            width: 100%;
+            height: 320px;
+            object-fit: cover;
+            background: linear-gradient(180deg, #2a2420 0%, #1a1612 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        
+        .card-content {
+            padding: 1.5rem;
+        }
+        
+        .card-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            color: #e8dcc8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-year {
+            color: #8a7d6f;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-rating {
+            color: #d4906f;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .card-description {
+            color: #8a7d6f;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-link {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, #d4906f 0%, #c17f5e 100%);
+            color: #1a1612;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .card-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 144, 111, 0.3);
+        }
+        
+        .back-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: transparent;
+            border: 1px solid rgba(212, 144, 111, 0.3);
+            color: #d4906f;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin: 2rem auto;
+            display: block;
+            width: fit-content;
+            font-weight: 500;
+        }
+        
+        .back-button:hover {
+            background: rgba(212, 144, 111, 0.1);
+            border-color: #d4906f;
+            transform: translateY(-2px);
+        }
+        /* Archive Section */
+        #archiveSection {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            margin: 0 auto;
+        }
+        
+        #archiveSection.active {
+            display: block;
+        }
+        /* Manifesto Section */
+        #manifestoSection {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            margin: 0 auto;
+        }
+        
+        #manifestoSection.active {
+            display: block;
+        }
+        
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        
+        .news-card {
+            background: rgba(30, 26, 22, 0.6);
+            border: 1px solid rgba(212, 144, 111, 0.2);
+            border-radius: 1rem;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .news-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(212, 144, 111, 0.5);
+            box-shadow: 0 10px 30px rgba(212, 144, 111, 0.2);
+        }
+        
+        .news-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(180deg, #2a2420 0%, #1a1612 100%);
+        }
+        
+        .news-image-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(180deg, #2a2420 0%, #1a1612 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        
+        .news-content {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .news-source {
+            color: #d4906f;
+            font-weight: 600;
+        }
+        
+        .news-date {
+            color: #8a7d6f;
+        }
+        
+        .news-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            color: #e8dcc8;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+        
+        .news-description {
+            color: #8a7d6f;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            flex: 1;
+        }
+        
+        .news-link {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, #d4906f 0%, #c17f5e 100%);
+            color: #1a1612;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .news-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 144, 111, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .news-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1.5rem 2rem;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 5rem;
+            }
+            
+            .title-ampersand {
+                font-size: 3.5rem;
+            }
+            
+            .form-card {
+                padding: 2rem;
+            }
+            
+            .results-header h2 {
+                font-size: 2rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Search Section */
+        #searchSection {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            margin: 0 auto;
+        }
+
+        #searchSection.active {
+            display: block;
+        }
+
+        .search-container {
+            background: rgba(30, 26, 22, 0.6);
+            border: 1px solid rgba(212, 144, 111, 0.2);
+            border-radius: 1rem;
+            padding: 3rem;
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .globe-section, .year-section, .type-section {
+            margin-bottom: 2.5rem;
+        }
+        .globe-visual {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .globe-svg {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 4px 20px rgba(212, 144, 111, 0.2));
+        }
+
+        .country-marker {
+            transition: all 0.3s ease;
+        }
+
+        .country-marker:hover {
+            r: 8;
+            fill: #d4906f !important;
+        }
+        .country-marker.active {
+            fill: #d4906f !important;
+            stroke-width: 2;
+        }
+
+        #hollywoodMarker text {
+            pointer-events: none;
+        }
+
+        .year-slider-container {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .year-slider {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, rgba(212, 144, 111, 0.2) 0%, rgba(212, 144, 111, 0.5) 100%);
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .year-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4906f 0%, #c17f5e 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(212, 144, 111, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .year-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 20px rgba(212, 144, 111, 0.6);
+        }
+        .year-slider::-moz-range-thumb {
+
+            width: 24px;
+            height: 24px;
+
+            border-radius: 50%;
+
+            background: linear-gradient(135deg, #d4906f 0%, #c17f5e 100%);
+
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(212, 144, 111, 0.4);
+
+            border: none;
+        }
+
+        .year-display {
+
+            text-align: center;
+
+            font-size: 2.5rem;
+
+            font-family: 'Playfair Display', serif;
+
+            font-weight: 700;
+            color: #d4906f;
+            margin-top: 1rem;
+
+            text-shadow: 0 2px 10px rgba(212, 144, 111, 0.3);
+        }
+
+        .year-labels {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            color: #8a7d6f;
+
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        .type-options {
+                display: flex;
+
+                gap: 1.5rem;
+
+                flex-wrap: wrap;
+        }
+        .type-radio {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 0.5rem;
+
+            cursor: pointer;
+
+            color: #8a7d6f;
+
+            font-size: 1rem;
+
+            transition: color 0.3s ease;
+        }
+
+        .type-radio input[type="radio"] {
+
+            width: 20px;
+
+            height: 20px;
+
+            accent-color: #d4906f;
+
+            cursor: pointer;
+        }
+
+        .type-radio:hover {
+
+            color: #d4906f;
+        }
+
+        .type-radio input[type="radio"]:checked + span {
+
+            color: #d4906f;
+
+            font-weight: 600;
+        }
+        #globeContainer {
+    
+            width: 100%;
+    
+            height: 400px;
+    
+            position: relative;
+    
+            margin: 0 auto;
+
+        }
+
+
+        #globeCanvas {
+    
+            width: 100%;
+    
+            height: 100%;
+    
+            cursor: grab;
+
+        }
+
+
+        #globeCanvas:active {
+    
+            cursor: grabbing;
+
+        }
+
+
+
+        .globe-info {
+    
+            text-align: center;
+    
+            margin-top: 1rem;
+    
+            color: #8a7d6f;
+    
+            font-size: 0.85rem;
+
+        }
+        /* Social Media Links */
+        .social-links {
+            display: flex;
+            justify-content: center;
+    
+            align-items: center;
+    
+            gap: 2rem;
+    
+            margin-bottom: 1.5rem;
+
+        }
+
+
+        .social-link {
+    
+            display: inline-flex;
+    
+            align-items: center;
+    
+            gap: 0.5rem;
+    
+            padding: 0.8rem 1.5rem;
+    
+            background: rgba(30, 26, 22, 0.6);
+    
+            border: 1px solid rgba(212, 144, 111, 0.3);
+    
+            border-radius: 0.5rem;
+    
+            color: #d4906f;
+    
+            text-decoration: none;
+    
+            font-size: 0.9rem;
+    
+            font-weight: 600;
+    
+            letter-spacing: 0.05em;
+    
+            transition: all 0.3s ease;
+    
+            backdrop-filter: blur(10px);
+
+        }
+        .social-link:hover {
+    
+            background: rgba(212, 144, 111, 0.2);
+    
+            border-color: #d4906f;
+    
+            transform: translateY(-2px);
+    
+            box-shadow: 0 5px 15px rgba(212, 144, 111, 0.3);
+
+        }
+        .social-link img {
+    
+            width: 24px;
+    
+            height: 24px;
+    
+            object-fit: contain;
+
+        }
+        /* Trivia Game Section */
+
+        #triviaSection {
+    
+            display: none;
+    
+            width: 100%;
+    
+            max-width: 800px;
+    
+            padding: 2rem;
+    
+            margin: 0 auto;
+
+        }
+
+
+        #triviaSection.active {
+    
+            display: block;
+
+        }
+
+
+        .trivia-setup {
+    
+            background: rgba(30, 26, 22, 0.6);
+    
+            border: 1px solid rgba(212, 144, 111, 0.2);
+    
+            border-radius: 1rem;
+    
+            padding: 3rem;
+    
+            backdrop-filter: blur(10px);
+
+        }
+
+
+        .trivia-group {
+    
+            margin-bottom: 2rem;
+
+        }
+
+
+        .trivia-group h4 {
+    
+            font-family: 'Cormorant Garamond', serif;
+    
+            color: #d4906f;
+    
+            font-size: 1.3rem;
+    
+            margin-bottom: 1rem;
+
+        }
+
+
+        .option-buttons {
+    
+            display: flex;
+    
+            gap: 1rem;
+    
+            flex-wrap: wrap;
+
+        }
+
+
+        .option-btn {
+    
+            flex: 1;
+    
+            min-width: 80px;
+    
+            padding: 1rem;
+    
+            background: rgba(15, 13, 10, 0.8);
+    
+            border: 2px solid rgba(212, 144, 111, 0.3);
+    
+            border-radius: 0.5rem;
+    
+            color: #8a7d6f;
+    
+            font-size: 1rem;
+    
+            font-weight: 600;
+    
+            cursor: pointer;
+    
+            transition: all 0.3s ease;
+
+        }
+
+
+        .option-btn:hover {
+    
+            border-color: #d4906f;
+    
+            background: rgba(212, 144, 111, 0.1);
+    
+            color: #d4906f;
+
+        }
+
+
+        .option-btn.selected {
+    
+            border-color: #d4906f;
+    
+            background: rgba(212, 144, 111, 0.2);
+    
+            color: #d4906f;
+
+        }
+
+
+
+        .quiz-container {
+    
+            background: rgba(30, 26, 22, 0.6);
+    
+            border: 1px solid rgba(212, 144, 111, 0.2);
+    
+            border-radius: 1rem;
+    
+            padding: 3rem;
+    
+            backdrop-filter: blur(10px);
+    
+            margin-top: 2rem;
+
+        }
+
+
+        .quiz-header {
+    
+            display: flex;
+    
+            justify-content: space-between;
+    
+            align-items: center;
+    
+            margin-bottom: 2rem;
+    
+            padding-bottom: 1rem;
+    
+            border-bottom: 1px solid rgba(212, 144, 111, 0.2);
+
+        }
+
+
+        .quiz-progress {
+    
+            color: #d4906f;
+    
+            font-size: 1.1rem;
+    
+            font-weight: 600;
+
+        }
+
+
+        .quiz-score {
+    
+            color: #8a7d6f;
+    
+            font-size: 1rem;
+
+        }
+
+
+        .question-image {
+    
+            width: 100%;
+    
+            height: 300px;
+    
+            object-fit: cover;
+    
+            border-radius: 0.5rem;
+    
+            margin-bottom: 2rem;
+
+        }
+
+
+        .question-text {
+    
+            font-family: 'Cormorant Garamond', serif;
+    
+            font-size: 1.8rem;
+    
+            color: #e8dcc8;
+    
+            margin-bottom: 2rem;    
+    
+            line-height: 1.4;
+
+        }
+
+
+        .answer-options {
+    
+            display: flex;
+    
+            flex-direction: column;
+    
+            gap: 1rem;
+    
+            margin-bottom: 2rem;
+
+        }
+
+
+        .answer-btn {
+    
+            width: 100%;
+    
+            padding: 1.5rem;
+    
+            background: rgba(15, 13, 10, 0.8);
+    
+            border: 2px solid rgba(212, 144, 111, 0.3);
+    
+            border-radius: 0.5rem;
+    
+            color: #c4b5a0;
+    
+            font-size: 1.1rem;
+    
+            text-align: left;
+    
+            cursor: pointer;
+    
+            transition: all 0.3s ease;
+
+        }
+
+
+        .answer-btn:hover:not(.correct):not(.wrong) {
+    
+    
+            border-color: #d4906f;
+
+            background: rgba(212, 144, 111, 0.1);
+    
+            transform: translateX(5px);
+
+        }
+
+
+        .answer-btn.correct {
+    
+            border-color: #4CAF50;
+    
+            background: rgba(76, 175, 80, 0.2);
+    
+            color: #4CAF50;
+
+        }
+
+
+        .answer-btn.wrong {
+    
+            border-color: #f44336;
+    
+            background: rgba(244, 67, 54, 0.2);
+    
+            color: #f44336;
+
+        }
+
+
+        .answer-btn:disabled {
+    
+            cursor: not-allowed;
+    
+            opacity: 0.7;
+
+        }
+
+
+        .explanation {
+    
+            background: rgba(212, 144, 111, 0.1);
+    
+            border-left: 3px solid #d4906f;
+    
+            padding: 1rem 1.5rem;
+    
+            border-radius: 0.5rem;
+    
+            color: #8a7d6f;
+    
+            margin-bottom: 2rem;
+    
+            line-height: 1.6;
+
+        }
+
+
+        .quiz-results {
+    
+            text-align: center;
+    
+            padding: 3rem;
+
+        }
+
+
+        .results-score {
+    
+            font-family: 'Playfair Display', serif;
+    
+            font-size: 4rem;
+    
+            color: #d4906f;
+    
+            margin-bottom: 1rem;
+
+        }
+
+
+        .results-message {
+    
+            font-family: 'Cormorant Garamond', serif;
+    
+            font-size: 1.5rem;
+    
+            color: #e8dcc8;
+    
+            margin-bottom: 2rem;
+
+        }
+
+
+        .results-details {
+    
+            color: #8a7d6f;
+    
+            font-size: 1.1rem;
+    
+            margin-bottom: 2rem;
+
+        }
+
+
+    </style>
+</head>
+<body>
+    <!-- Flash Overlay for Camera Effect -->
+    <div class="flash-overlay" id="flashOverlay"></div>
+    
+    <!-- Page Transition Overlay -->
+    <div class="page-transition-overlay" id="pageTransition"></div>
+    
+    <nav>
+        <div class="logo" onclick="resetToHome()">CINAPSE</div>
+        <div class="vintage-time" id="vintageTime"></div>
+        <ul class="nav-links">
+            <li><a href="#" onclick="loadArchive(); return false;">Archive</a></li>
+            <li><a href="#" onclick="loadManifesto(); return false;">Manifesto</a></li>
+            <li><a href="#" onclick="loadTrivia(); return false;">Trivia</a></li>
+            <li><a href="#" onclick="loadSearch(); return false;">Search</a></li>
+        </ul>
+    </nav>
+    <script>
+    console.log('THREE.js loaded:', typeof THREE !== 'undefined');
+    </script>
+    
+    <main style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+        <!-- Landing Section -->
+        <div id="landingSection">
+            <div class="marquee-container">
+                <div class="marquee">
+                    <div class="marquee-content">
+                        <span class="marquee-item">The Algorithmic Curator</span>
+                        <span class="marquee-item">Discover Your Next Obsession</span>
+                        <span class="marquee-item">Cinema Meets Sound</span>
+                        <span class="marquee-item">Personalized Recommendations</span>
+                        <span class="marquee-item">AI-Powered Taste Analysis</span>
+                    </div>
+                    <div class="marquee-content" aria-hidden="true">
+                        <span class="marquee-item">The Algorithmic Curator</span>
+                        <span class="marquee-item">Discover Your Next Obsession</span>
+                        <span class="marquee-item">Cinema Meets Sound</span>
+                        <span class="marquee-item">Personalized Recommendations</span>
+                        <span class="marquee-item">AI-Powered Taste Analysis</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h1>
+                <span class="title-cinema">Cinema</span>
+                <span class="title-ampersand">&</span>
+                <span class="title-sound">Sound</span>
+            </h1>
+            
+            <p class="subtitle">
+                Tell us what you love. We'll find the hidden connections between the music you hear and the films you watch.
+            </p>
+            
+            <div class="form-card">
+                <div class="input-group">
+                    <label style="color: #8a7d6f; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Movies</label>
+                    <div id="movieInputs">
+                        <div class="input-wrapper">
+                            <input type="text" class="movie-input" placeholder="Enter a movie you love..." />
+                        </div>
+                    </div>
+                    <button class="add-btn" onclick="addMovieInput()">+ Add Another Movie</button>
+                </div>
+                
+                <div class="divider">and</div>
+                
+                <div class="input-group">
+                    <label style="color: #8a7d6f; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Series</label>
+                    <div id="seriesInputs">
+                        <div class="input-wrapper">
+                            <input type="text" class="series-input" placeholder="Enter a series you love..." />
+                        </div>
+                    </div>
+                    <button class="add-btn" onclick="addSeriesInput()">+ Add Another Series</button>
+                </div>
+                
+                <div class="divider">and</div>
+                
+                <div class="input-group">
+                    <label style="color: #8a7d6f; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Music Genres</label>
+                    <div id="musicInputs">
+                        <div class="input-wrapper">
+                            <select class="music-input">
+                                <option value="">Select a genre</option>
+                                <option value="rock">Rock</option>
+                                <option value="electronic">Electronic</option>
+                                <option value="jazz">Jazz</option>
+                                <option value="hiphop">Hip-Hop</option>
+                                <option value="indie">Indie</option>
+                                <option value="classical">Classical</option>
+                                <option value="pop">Pop</option>
+                                <option value="metal">Metal</option>
+                                <option value="ambient">Ambient</option>
+                                <option value="folk">Folk</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="add-btn" onclick="addMusicInput()">+ Add Another Genre</button>
+                </div>
+                
+                <button onclick="generateRecommendations()" style="margin-top: 2rem;">Generate Recommendations</button>
+            </div>
+        </div>
+        
+        <!-- Loading Section -->
+        <div id="loadingSection">
+            <div class="loading-spinner"></div>
+            <p class="loading-text" id="loadingMainText">Hold on Let me cook...</p>
+            <p style="color: #5a5047; font-size: 0.9rem;">Finding  Results across cinema and sound ...</p>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="resultsSection">
+            <div class="results-header">
+                <h2>Your Personalized Recommendations</h2>
+                <p style="color: #8a7d6f;">Curated based on your unique taste</p>
+            </div>
+            
+            <div id="moviesCategory" class="category">
+                <h3>🎬 Movies</h3>
+                <div id="moviesGrid" class="grid"></div>
+            </div>
+            
+            <div id="seriesCategory" class="category">
+                <h3>📺 Series</h3>
+                <div id="seriesGrid" class="grid"></div>
+            </div>
+            
+            <div id="musicCategory" class="category">
+                <h3>🎵 Music</h3>
+                <div id="musicGrid" class="grid"></div>
+            </div>
+            
+            <button class="back-button" onclick="location.reload()">← Back to Discovery</button>
+        </div>
+        <!-- Archive Section -->
+        <!-- Archive Section -->
+        <div id="archiveSection">
+            <div class="results-header">
+                <h2>The Weekly Archive</h2>
+                <p id="archiveDate" style="color: #d4906f; font-size: 1.2rem; margin-top: 0.5rem;"></p>
+                <p style="color: #8a7d6f; margin-top: 0.5rem;">Fresh releases from the past week</p>
+            </div>
+            
+            <div id="archiveMoviesCategory" class="category">
+                <h3>🎬 Movies Released This Week</h3>
+                <div id="archiveMoviesGrid" class="grid"></div>
+            </div>
+            
+            <div id="archiveSeriesCategory" class="category">
+                <h3>📺 Series Released This Week</h3>
+                <div id="archiveSeriesGrid" class="grid"></div>
+            </div>
+            
+            <button class="back-button" onclick="location.reload()">← Back to Discovery</button>
+        </div>
+        <!-- Manifesto Section -->
+        <div id="manifestoSection">
+            <div class="results-header">
+                <h2>The Manifesto</h2>
+                <p style="color: #d4906f; font-size: 1.2rem; margin-top: 0.5rem;">Latest Hollywood News</p>
+                <p style="color: #8a7d6f; margin-top: 0.5rem;">Stay updated with the film industry's latest stories</p>
+            </div>
+            
+            <div class="category">
+                <div id="newsGrid" class="news-grid"></div>
+            </div>
+            
+            <button class="back-button" onclick="location.reload()">← Back to Discovery</button>
+        </div>
+        
+        <!-- Search Section -->
+        <div id="searchSection">
+            <div class="results-header">
+                <h2>Explore by Region & Era</h2>
+                <p style="color: #8a7d6f; margin-top: 0.5rem;">Discover cinema from around the world, across time</p>
+            </div>
+    
+        <div class="search-container">
+            <div class="globe-section">
+    
+                <h3 style="font-family: 'Cormorant Garamond', serif; color: #d4906f; margin-bottom: 1rem;">🌍 Select Country</h3>
+    
+    
+                <div id="globeContainer"></div>
+    
+    
+                <p id="selectedCountryDisplay" style="text-align: center; color: #d4906f; margin-top: 1rem; font-size: 1.1rem; font-weight: 600;">🇺🇸 United States (Hollywood)</p>
+    
+    
+                <p class="globe-info">Click and drag to rotate • Click a marker to select country</p>
+    
+    
+                <select id="countryDropdown" style="width: 100%; margin-top: 1rem;">
+        
+                    <option value="US">🇺🇸 United States</option>
+        
+                    <option value="GB">🇬🇧 United Kingdom</option>
+        
+                    <option value="FR">🇫🇷 France</option>
+        
+                    <option value="DE">🇩🇪 Germany</option>
+        
+                    <option value="IT">🇮🇹 Italy</option>
+        
+                    <option value="ES">🇪🇸 Spain</option>
+        
+                    <option value="JP">🇯🇵 Japan</option>
+        
+                    <option value="KR">🇰🇷 South Korea</option>
+        
+                    <option value="CN">🇨🇳 China</option>
+        
+                    <option value="IN">🇮🇳 India</option>
+        
+                    <option value="MX">🇲🇽 Mexico</option>
+        
+                    <option value="BR">🇧🇷 Brazil</option>
+        
+                    <option value="AR">🇦🇷 Argentina</option>
+        
+                    <option value="CA">🇨🇦 Canada</option>
+        
+                    <option value="AU">🇦🇺 Australia</option>
+        
+                    <option value="RU">🇷🇺 Russia</option>
+        
+                    <option value="TR">🇹🇷 Turkey</option>
+        
+                    <option value="EG">🇪🇬 Egypt</option>
+        
+                    <option value="ZA">🇿🇦 South Africa</option>
+        
+                    <option value="TH">🇹🇭 Thailand</option>
+        
+                    <option value="SE">🇸🇪 Sweden</option>
+        
+                    <option value="NO">🇳🇴 Norway</option>
+        
+                    <option value="DK">🇩🇰 Denmark</option>
+        
+                    <option value="PL">🇵🇱 Poland</option>
+
+                    <option value="TN">🇹🇳 Tunisia</option>
+    
+                </select>
+
+            </div>
+        </div>
+        
+        <!-- Year Slider -->
+        <!-- Year Range Sliders -->
+        <div class="year-section">
+            <h3 style="font-family: 'Cormorant Garamond', serif; color: #d4906f; margin-bottom: 1rem;">📅 Select Year Range</h3>
+    
+
+            <div class="year-slider-container">
+    
+                <label style="color: #8a7d6f; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">From:</label>
+    
+                <input type="range" id="yearSliderStart" min="1940" max="2026" value="1990" class="year-slider">
+    
+            
+            <div class="year-display" id="yearDisplayStart">1990</div>
+
+        </div>
+    
+
+        <div class="year-slider-container" style="margin-top: 1.5rem;">
+    
+            <label style="color: #8a7d6f; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">To:</label>
+    
+            <input type="range" id="yearSliderEnd" min="1940" max="2026" value="2000" class="year-slider">
+    
+            <div class="year-display" id="yearDisplayEnd">2000</div>
+
+        </div>
+</div>
+        
+        <!-- Content Type -->
+        <div class="type-section">
+            <h3 style="font-family: 'Cormorant Garamond', serif; color: #d4906f; margin-bottom: 1rem;">🎬 Content Type</h3>
+            <div class="type-options">
+                <label class="type-radio">
+                    <input type="radio" name="contentType" value="movie" checked>
+                    <span>Movies</span>
+                </label>
+                <label class="type-radio">
+                    <input type="radio" name="contentType" value="tv">
+                    <span>Series</span>
+                </label>
+                <label class="type-radio">
+                    <input type="radio" name="contentType" value="both">
+                    <span>Both</span>
+                </label>
+            </div>
+        </div>
+        
+        <button onclick="searchByCountryYear()" style="margin-top: 2rem;">🔍 Discover Content</button>
+    </div>
+    
+    <!-- Search Results -->
+    <div id="searchResults" style="display: none; margin-top: 3rem;">
+        <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: #d4906f; margin-bottom: 1.5rem;">Results</h3>
+        <div id="searchResultsGrid" class="grid"></div>
+    </div>
+</div>
+<!-- Trivia Section -->
+<div id="triviaSection">
+    <div class="results-header">
+        <h2>Movie Trivia Game</h2>
+        <p style="color: #8a7d6f; margin-top: 0.5rem;">Test your cinema knowledge</p>
+    </div>
+    
+    <!-- Setup Screen -->
+    <div id="triviaSetup" class="trivia-setup">
+        <div class="input-group" style="margin-bottom: 2rem;">
+            <label style="color: #8a7d6f; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">Enter Movie Name</label>
+            <input type="text" id="triviaMovieInput" placeholder="e.g., Inception, The Godfather..." style="padding-left: 1.2rem;">
+        </div>
+        
+        <div class="trivia-group">
+            <h4>🎯 Number of Questions</h4>
+            <div class="option-buttons">
+                <button class="option-btn selected" onclick="selectQuestionCount(5)">5 Questions</button>
+                <button class="option-btn" onclick="selectQuestionCount(10)">10 Questions</button>
+                <button class="option-btn" onclick="selectQuestionCount(15)">15 Questions</button>
+            </div>
+        </div>
+        
+        <div class="trivia-group">
+            <h4>⚡ Difficulty Level</h4>
+            <div class="option-buttons">
+                <button class="option-btn selected" onclick="selectDifficulty('easy')">Easy</button>
+                <button class="option-btn" onclick="selectDifficulty('medium')">Medium</button>
+                <button class="option-btn" onclick="selectDifficulty('hard')">Hard</button>
+            </div>
+        </div>
+        
+        <button onclick="startTrivia()" style="margin-top: 2rem;">🎬 Start Quiz</button>
+    </div>
+    
+    <!-- Quiz Screen -->
+    <div id="triviaQuiz" style="display: none;">
+        <div class="quiz-container">
+            <div class="quiz-header">
+                <div class="quiz-progress" id="quizProgress">Question 1/5</div>
+                <div class="quiz-score" id="quizScore">Score: 0/0</div>
+            </div>
+            
+            <img id="questionImage" class="question-image" src="" alt="Movie scene">
+            
+            <div class="question-text" id="questionText"></div>
+            
+            <div class="answer-options" id="answerOptions"></div>
+            
+            <div id="explanationBox" class="explanation" style="display: none;"></div>
+            
+            <button id="nextButton" onclick="nextQuestion()" style="display: none;">Next Question →</button>
+        </div>
+    </div>
+    
+    <!-- Results Screen -->
+    <div id="triviaResults" style="display: none;">
+        <div class="quiz-container quiz-results">
+            <div class="results-score" id="finalScore"></div>
+            <div class="results-message" id="resultsMessage"></div>
+            <div class="results-details" id="resultsDetails"></div>
+            <button onclick="resetTrivia()" style="margin-bottom: 1rem;">🔄 Play Again</button>
+            <button class="back-button" onclick="location.reload()">← Back to Home</button>
+        </div>
+    </div>
+    
+    <button class="back-button" id="triviaBackButton" onclick="location.reload()">← Back to Home</button>
+</div>
+    </main>
+    
+    <footer>
+        <div class="social-links">
+            <a href="https://www.instagram.com/ghaith.aouicha/" target="_blank" class="social-link">
+            
+            
+                <img src="hd-white-outline-round-instagram-logo-icon-png-7017516951188810uvfjvesqu.png"alt="Instagram">
+            
+                Instagram
+        
+            </a>
+        
+            <a href="https://www.behance.net/aouichaghaith" target="_blank" class="social-link">
+            
+                <img src="hd-behance-be-white-logo-icon-sign-symbol-png-701751694779694crmtqxzvrb.png" alt="Behance">
+            
+                Behance
+        
+            </a>
+        </div>
+        EST. 2026 — CINAPSE
+    </footer>
+    
+<script>
+/* ================= PAGE TRANSITION HELPERS ================= */
+function transitionToPage(callback) {
+    const overlay = document.getElementById('pageTransition');
+    overlay.classList.add('active');
+    setTimeout(() => {
+        callback();
+        setTimeout(() => {
+            overlay.classList.remove('active');
+        }, 100);
+    }, 600);
+}
+
+function hideAllSections() {
+    document.getElementById('landingSection').style.display = 'none';
+    document.getElementById('resultsSection').classList.remove('active');
+    document.getElementById('archiveSection').classList.remove('active');
+    document.getElementById('manifestoSection').classList.remove('active');
+    document.getElementById('loadingSection').classList.remove('active');
+    document.getElementById('searchSection').classList.remove('active');
+    document.getElementById('searchResults').style.display = 'none';
+    
+}
+
+/* ================= VINTAGE TIME DISPLAY ================= */
+function updateVintageTime() {
+    const now = new Date();
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const month = months[now.getMonth()];
+    const timeElement = document.getElementById('vintageTime');
+    if (timeElement) {
+        timeElement.textContent = `${hours}:${minutes}:${seconds} • ${day} ${month} 1972`;
+    }
+}
+updateVintageTime();
+setInterval(updateVintageTime, 1000);
+
+/* ================= CAMERA FLASH EFFECT ================= */
+document.addEventListener('click', (e) => {
+    const flash = document.getElementById('flashOverlay');
+    flash.style.setProperty('--x', `${e.clientX}px`);
+    flash.style.setProperty('--y', `${e.clientY}px`);
+    flash.classList.add('active');
+    setTimeout(() => {
+        flash.classList.remove('active');
+    }, 250);
+});
+
+/* ================= INPUT HELPERS ================= */
+function addMovieInput() {
+    addInput('movieInputs', 'movie-input', 'Another movie...');
+}
+
+function addSeriesInput() {
+    addInput('seriesInputs', 'series-input', 'Another series...');
+}
+
+function addMusicInput() {
+    const container = document.getElementById('musicInputs');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'input-wrapper';
+    wrapper.innerHTML = `
+        <select class="music-input">
+            <option value="">Select a genre</option>
+            <option value="rock">Rock</option>
+            <option value="electronic">Electronic</option>
+            <option value="jazz">Jazz</option>
+            <option value="hiphop">Hip-Hop</option>
+            <option value="indie">Indie</option>
+            <option value="classical">Classical</option>
+            <option value="pop">Pop</option>
+            <option value="metal">Metal</option>
+            <option value="ambient">Ambient</option>
+            <option value="folk">Folk</option>
+        </select>
+        <button class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+    `;
+    container.appendChild(wrapper);
+}
+
+function addInput(containerId, className, placeholder) {
+    const container = document.getElementById(containerId);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'input-wrapper';
+    wrapper.innerHTML = `
+        <input type="text" placeholder="${placeholder}" class="${className}">
+        <button class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+    `;
+    container.appendChild(wrapper);
+}
+
+/* ================= CORE LOGIC ================= */
+async function generateRecommendations() {
+    const movies = getValues('.movie-input');
+    const series = getValues('.series-input');
+    const musicGenres = getValues('.music-input');
+
+    if (!movies.length && !series.length && !musicGenres.length) {
+        alert('Please enter at least one movie, series, or music genre.');
+        return;
+    }
+
+    let mode, data;
+    if (movies.length || series.length) {
+        mode = 'names';
+        data = { movies, series };
+    } else {
+        mode = 'genres';
+        data = { musicGenres };
+    }
+
+    transitionToPage(() => {
+        hideAllSections();
+        document.getElementById('loadingSection').classList.add('active');
+    });
+
+    setTimeout(async () => {
+        try {
+            const response = await fetch('https://synapse-sxl8.onrender.com//recommend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode, data })
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.error || 'Recommendation failed');
+            }
+
+            displayResults(result.recommendations);
+
+        } catch (err) {
+            console.error(err);
+            alert('Server error. Make sure backend is running.');
+            resetToHome();
+        }
+    }, 700);
+}
+
+/* ================= UI HELPERS ================= */
+function getValues(selector) {
+    return Array.from(document.querySelectorAll(selector))
+        .map(el => el.value?.trim())
+        .filter(Boolean);
+}
+
+function displayResults(recommendations) {
+    document.getElementById('loadingSection').classList.remove('active');
+    document.getElementById('resultsSection').classList.add('active');
+
+    renderCategory('movies', recommendations.movies, '🎬', createCard);
+    renderCategory('series', recommendations.series, '📺', createCard);
+    renderCategory('music', recommendations.music, '🎵', createMusicCard);
+}
+
+function renderCategory(type, items, icon, renderer) {
+    const section = document.getElementById(`${type}Category`);
+    const grid = document.getElementById(`${type}Grid`);
+
+    if (!items || !items.length) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    grid.innerHTML = '';
+    items.forEach(item => grid.appendChild(renderer(item, icon)));
+}
+
+/* ================= CARDS ================= */
+function createCard(item, icon) {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+        ${item.poster
+            ? `<img src="${item.poster}" class="card-poster">`
+            : `<div class="card-poster">${icon}</div>`
+        }
+        <div class="card-content">
+            <div class="card-title">${item.title}</div>
+            ${item.year ? `<div class="card-year">${item.year}</div>` : ''}
+            ${item.rating ? `<div class="card-rating">${item.rating}</div>` : ''}
+            ${item.description ? `<div class="card-description">${item.description.slice(0,120)}...</div>` : ''}
+            <a href="${item.googleLink}" target="_blank" class="card-link">🔍 Explore</a>
+        </div>
+    `;
+    return card;
+}
+
+function createMusicCard(item) {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+        ${item.poster
+            ? `<img src="${item.poster}" class="card-poster">`
+            : `<div class="card-poster">🎵</div>`
+        }
+        <div class="card-content">
+            <div class="card-title">${item.title}</div>
+            ${item.year ? `<div class="card-year">${item.year}</div>` : ''}
+            <div class="card-description">${item.description || ''}</div>
+            <a href="https://www.google.com/search?q=${encodeURIComponent(item.title)}"
+               target="_blank" class="card-link">🔍 Listen</a>
+        </div>
+    `;
+    return card;
+}
+
+/* ================= ARCHIVE FUNCTIONALITY ================= */
+async function loadArchive() {
+    transitionToPage(() => {
+        hideAllSections();
+        document.getElementById('loadingSection').classList.add('active');
+    });
+    
+    setTimeout(async () => {
+        try {
+            const response = await fetch('https://synapse-sxl8.onrender.com//archive');
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to load archive');
+            }
+            
+            document.getElementById('loadingSection').classList.remove('active');
+            document.getElementById('archiveSection').classList.add('active');
+            
+            document.getElementById('archiveDate').textContent = `Around ${result.dateRange} in History`;
+            
+            const moviesCategory = document.getElementById('archiveMoviesCategory');
+            const moviesGrid = document.getElementById('archiveMoviesGrid');
+            
+            if (result.movies && result.movies.length >= 2) {
+                moviesCategory.style.display = 'block';
+                moviesGrid.innerHTML = '';
+                result.movies.forEach(movie => {
+    
+                    const cardData = {
+        
+                        ...movie,
+        
+                        year: movie.releaseDate || movie.year  // Use full date instead of just year
+    
+                    };
+    
+    
+                moviesGrid.appendChild(createCard(cardData, '🎬'));
+
+            });
+            } else {
+                moviesCategory.style.display = 'none';
+            }
+            
+            const seriesCategory = document.getElementById('archiveSeriesCategory');
+            const seriesGrid = document.getElementById('archiveSeriesGrid');
+            
+            if (result.series && result.series.length >= 2) {
+                seriesCategory.style.display = 'block';
+                seriesGrid.innerHTML = '';
+                result.series.forEach(series => {
+    
+                    const cardData = {
+        
+                        ...series,
+        
+                        year: series.releaseDate || series.year
+    
+                    };
+    
+                    seriesGrid.appendChild(createCard(cardData, '📺'));
+
+                });
+            } else {
+                seriesCategory.style.display = 'none';
+            }
+            
+            if (result.movies.length < 2 && result.series.length < 2) {
+                moviesGrid.innerHTML = '<p style="color: #8a7d6f; text-align: center; grid-column: 1/-1; padding: 2rem;">No releases found around this date. Try another day!</p>';
+                moviesCategory.style.display = 'block';
+            }
+            
+            console.log(`📊 Archive loaded: ${result.totalMovies} movies, ${result.totalSeries} series`);
+            
+        } catch (err) {
+            console.error(err);
+            alert('Failed to load archive. Make sure the server is running.');
+            resetToHome();
+        }
+    }, 700);
+}
+function loadSearch() {
+    transitionToPage(() => {
+        hideAllSections();
+        document.getElementById('searchSection').classList.add('active');
+    });
+}
+
+// Country names map
+const COUNTRY_NAMES = {
+    'US': '🇺🇸 United States (Hollywood)',
+    'GB': '🇬🇧 United Kingdom',
+    'FR': '🇫🇷 France',
+    'DE': '🇩🇪 Germany',
+    'IT': '🇮🇹 Italy',
+    'ES': '🇪🇸 Spain',
+    'JP': '🇯🇵 Japan',
+    'KR': '🇰🇷 South Korea',
+    'CN': '🇨🇳 China',
+    'IN': '🇮🇳 India',
+    'MX': '🇲🇽 Mexico',
+    'BR': '🇧🇷 Brazil',
+    'AR': '🇦🇷 Argentina',
+    'CA': '🇨🇦 Canada',
+    'AU': '🇦🇺 Australia',
+    'RU': '🇷🇺 Russia',
+    'TR': '🇹🇷 Turkey',
+    'EG': '🇪🇬 Egypt',
+    'ZA': '🇿🇦 South Africa',
+    'TH': '🇹🇭 Thailand',
+    'SE': '🇸🇪 Sweden',
+    'NO': '🇳🇴 Norway',
+    'DK': '🇩🇰 Denmark',
+    'PL': '🇵🇱 Poland'
+};
+
+// Initialize globe interactions
+document.addEventListener('DOMContentLoaded', () => {
+    // Year sliders
+    const yearSliderStart = document.getElementById('yearSliderStart');
+    const yearSliderEnd = document.getElementById('yearSliderEnd');
+    const yearDisplayStart = document.getElementById('yearDisplayStart');
+    const yearDisplayEnd = document.getElementById('yearDisplayEnd');
+    
+    if (yearSliderStart) {
+        yearSliderStart.addEventListener('input', (e) => {
+            const startVal = parseInt(e.target.value);
+            const endVal = parseInt(yearSliderEnd.value);
+            
+            if (startVal > endVal) {
+                yearSliderEnd.value = startVal;
+                yearDisplayEnd.textContent = startVal;
+            }
+            yearDisplayStart.textContent = startVal;
+        });
+    }
+    
+    if (yearSliderEnd) {
+        yearSliderEnd.addEventListener('input', (e) => {
+            const endVal = parseInt(e.target.value);
+            const startVal = parseInt(yearSliderStart.value);
+            
+            if (endVal < startVal) {
+                yearSliderStart.value = endVal;
+                yearDisplayStart.textContent = endVal;
+            }
+            yearDisplayEnd.textContent = endVal;
+        });
+    }
+    
+    // Country markers
+    const markers = document.querySelectorAll('.country-marker');
+    const dropdown = document.getElementById('countryDropdown');
+    const displayText = document.getElementById('selectedCountryDisplay');
+    
+    markers.forEach(marker => {
+        marker.addEventListener('click', () => {
+            const country = marker.getAttribute('data-country');
+            selectCountry(country);
+        });
+    });
+    
+    if (dropdown) {
+        dropdown.addEventListener('change', (e) => {
+            selectCountry(e.target.value);
+        });
+    }
+    
+    function selectCountry(countryCode) {
+        markers.forEach(m => m.classList.remove('active'));
+        const selectedMarker = document.querySelector(`[data-country="${countryCode}"]`);
+        if (selectedMarker) {
+            selectedMarker.classList.add('active');
+        }
+        
+        if (dropdown) dropdown.value = countryCode;
+        if (displayText) displayText.textContent = COUNTRY_NAMES[countryCode] || countryCode;
+    }
+});
+async function searchByCountryYear() {
+    const country = document.getElementById('countryDropdown').value;
+    const yearStart = document.getElementById('yearSliderStart').value;
+    const yearEnd = document.getElementById('yearSliderEnd').value;
+    const type = document.querySelector('input[name="contentType"]:checked').value;
+    
+    // Hide results first
+    document.getElementById('searchResults').style.display = 'none';
+    
+    // Show loading, keep search section visible
+    document.getElementById('loadingSection').classList.add('active');
+    
+    setTimeout(async () => {
+        try {
+            const response = await fetch('https://synapse-sxl8.onrender.com//search-by-country', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ country, yearStart, yearEnd, type })
+            });
+            
+            const result = await response.json();
+            
+            // Hide loading
+            document.getElementById('loadingSection').classList.remove('active');
+            
+            // Show results
+            document.getElementById('searchResults').style.display = 'block';
+            
+            const grid = document.getElementById('searchResultsGrid');
+            grid.innerHTML = '';
+            
+            if (result.success && result.results && result.results.length > 0) {
+                result.results.forEach(item => {
+                    grid.appendChild(createCard({
+                        title: item.title || item.name,
+                        year: item.release_date ? item.release_date.split('-')[0] : (item.first_air_date ? item.first_air_date.split('-')[0] : null),
+                        rating: item.vote_average ? `⭐ ${item.vote_average.toFixed(1)}/10` : null,
+                        poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+                        description: item.overview,
+                        googleLink: `https://www.google.com/search?q=${encodeURIComponent((item.title || item.name) + ' watch online')}`
+                    }, type === 'movie' || item.title ? '🎬' : '📺'));
+                });
+            } else {
+                grid.innerHTML = '<p style="color: #8a7d6f; text-align: center; grid-column: 1/-1; padding: 2rem;">No results found. Try another combination!</p>';
+            }
+            
+        } catch (err) {
+            console.error('Search error:', err);
+            document.getElementById('loadingSection').classList.remove('active');
+            alert('Search failed. Make sure the server is running.');
+        }
+    }, 700);
+}
+/* ================= MANIFESTO FUNCTIONALITY ================= */
+async function loadManifesto() {
+    transitionToPage(() => {
+        hideAllSections();
+        document.getElementById('loadingSection').classList.add('active');
+    });
+    
+    setTimeout(async () => {
+        try {
+            const response = await fetch('https://synapse-sxl8.onrender.com//news');
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to load news');
+            }
+            
+            document.getElementById('loadingSection').classList.remove('active');
+            document.getElementById('manifestoSection').classList.add('active');
+            
+            const grid = document.getElementById('newsGrid');
+            grid.innerHTML = '';
+            
+            if (result.articles && result.articles.length > 0) {
+                result.articles.forEach(article => {
+                    grid.appendChild(createNewsCard(article));
+                });
+            } else {
+                grid.innerHTML = '<p style="color: #8a7d6f; text-align: center; grid-column: 1/-1; padding: 2rem;">No news available at the moment.</p>';
+            }
+            
+            console.log(`📰 Loaded ${result.total} news articles`);
+            
+        } catch (err) {
+            console.error(err);
+            alert('Failed to load news. Make sure the server is running and you have a valid News API key.');
+            resetToHome();
+        }
+    }, 700);
+}
+
+function createNewsCard(article) {
+    const card = document.createElement('div');
+    card.className = 'news-card';
+    
+    card.innerHTML = `
+        ${article.image
+            ? `<img src="${article.image}" class="news-image" alt="${article.title}">`
+            : `<div class="news-image-placeholder">📰</div>`
+        }
+        <div class="news-content">
+            <div class="news-meta">
+                <span class="news-source">${article.source}</span>
+                <span class="news-date">${article.publishedAt}</span>
+            </div>
+            <div class="news-title">${article.title}</div>
+            <div class="news-description">${article.description}</div>
+            <a href="${article.url}" target="_blank" class="news-link">Read Full Story →</a>
+        </div>
+    `;
+    
+    return card;
+}
+
+/* ================= RESET ================= */
+function resetToHome() {
+    document.getElementById('archiveSection').classList.remove('active');
+    document.getElementById('manifestoSection').classList.remove('active');
+    location.reload();
+}
+// 3D Globe with Three.js
+let globe = null;
+let currentSelectedCountry = 'US';
+
+const COUNTRY_POSITIONS = {
+    'US': { lat: 37.0902, lon: -95.7129, name: '🇺🇸 United States (Hollywood)' },
+    'GB': { lat: 51.5074, lon: -0.1278, name: '🇬🇧 United Kingdom' },
+    'FR': { lat: 48.8566, lon: 2.3522, name: '🇫🇷 France' },
+    'DE': { lat: 52.5200, lon: 13.4050, name: '🇩🇪 Germany' },
+    'IT': { lat: 41.9028, lon: 12.4964, name: '🇮🇹 Italy' },
+    'ES': { lat: 40.4168, lon: -3.7038, name: '🇪🇸 Spain' },
+    'JP': { lat: 36.2048, lon: 138.2529, name: '🇯🇵 Japan' },
+    'KR': { lat: 37.5665, lon: 126.9780, name: '🇰🇷 South Korea' },
+    'CN': { lat: 35.8617, lon: 104.1954, name: '🇨🇳 China' },
+    'IN': { lat: 20.5937, lon: 78.9629, name: '🇮🇳 India' },
+    'MX': { lat: 23.6345, lon: -102.5528, name: '🇲🇽 Mexico' },
+    'BR': { lat: -14.2350, lon: -51.9253, name: '🇧🇷 Brazil' },
+    'AR': { lat: -38.4161, lon: -63.6167, name: '🇦🇷 Argentina' },
+    'CA': { lat: 56.1304, lon: -106.3468, name: '🇨🇦 Canada' },
+    'AU': { lat: -25.2744, lon: 133.7751, name: '🇦🇺 Australia' },
+    'RU': { lat: 61.5240, lon: 105.3188, name: '🇷🇺 Russia' },
+    'TR': { lat: 38.9637, lon: 35.2433, name: '🇹🇷 Turkey' },
+    'EG': { lat: 26.8206, lon: 30.8025, name: '🇪🇬 Egypt' },
+    'ZA': { lat: -30.5595, lon: 22.9375, name: '🇿🇦 South Africa' },
+    'TH': { lat: 15.8700, lon: 100.9925, name: '🇹🇭 Thailand' },
+    'SE': { lat: 60.1282, lon: 18.6435, name: '🇸🇪 Sweden' },
+    'NO': { lat: 60.4720, lon: 8.4689, name: '🇳🇴 Norway' },
+    'DK': { lat: 56.2639, lon: 9.5018, name: '🇩🇰 Denmark' },
+    'PL': { lat: 51.9194, lon: 19.1451, name: '🇵🇱 Poland' },
+    'TN': { lat: 33.8869, lon: 9.5375, name: '🇹🇳 Tunisia' }
+};
+
+function init3DGlobe() {
+    const container = document.getElementById('globeContainer');
+    if (!container) return;
+    
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.id = 'globeCanvas';
+    
+    // Globe
+    const geometry = new THREE.SphereGeometry(5, 64, 64);
+    // Use real Earth texture
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load('https://unpkg.com/three-globe/example/img/earth-day.jpg'); 
+    const material = new THREE.MeshPhongMaterial({ 
+        map: texture,
+        shininess: 5,
+        specular: new THREE.Color(0x333333)
+    });
+    
+    const globeMesh = new THREE.Mesh(geometry, material);
+    scene.add(globeMesh);
+    
+    // Add atmosphere glow
+    const glowGeometry = new THREE.SphereGeometry(5.2, 64, 64);
+    const glowMaterial = new THREE.ShaderMaterial({
+        uniforms: {},
+        vertexShader: `
+            varying vec3 vNormal;
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            varying vec3 vNormal;
+            void main() {
+                float intensity = pow(0.6 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+                gl_FragColor = vec4(0.83, 0.56, 0.44, 1.0) * intensity;
+            }
+        `,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending,
+        transparent: true
+    });
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    scene.add(glow);
+    
+    // Country markers
+    const markers = [];
+    // Create X shape geometry
+    const markerGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+    
+    Object.keys(COUNTRY_POSITIONS).forEach(code => {
+        const pos = COUNTRY_POSITIONS[code];
+        const phi = (90 - pos.lat) * (Math.PI / 180);
+        const theta = (pos.lon + 180) * (Math.PI / 180);
+        
+        const x = -5 * Math.sin(phi) * Math.cos(theta);
+        const y = 5 * Math.cos(phi);
+        const z = 5 * Math.sin(phi) * Math.sin(theta);
+        
+        const markerMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x000000  // Black dot
+        });
+        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+        marker.position.set(x, y, z);
+        marker.userData = { country: code };
+        const canvas2 = document.createElement('canvas');
+        const ctx2 = canvas2.getContext('2d');
+        canvas2.width = 256;
+        canvas2.height = 64;
+        ctx2.font = 'Bold 20px Inter';
+        ctx2.fillStyle = '#e8dcc8';
+        ctx2.textAlign = 'center';
+        ctx2.font = 'Bold 30px Arial';  // Larger font for emoji
+
+        const emoji = COUNTRY_POSITIONS[code].name.match(/[\u{1F1E6}-\u{1F1FF}]{2}/gu);
+
+        if (emoji) {
+    
+            ctx2.fillText(emoji[0], 128, 45);
+
+        } else {
+    
+            ctx2.fillText(code, 128, 40);
+
+        }
+        const labelTexture = new THREE.CanvasTexture(canvas2);
+        const labelMaterial = new THREE.SpriteMaterial({ 
+
+            map: labelTexture,
+            transparent: true
+        });
+        const label = new THREE.Sprite(labelMaterial);
+        label.scale.set(0.5, 0.125, 1);
+        label.position.set(x * 1.2, y * 1.2, z * 1.2);
+        scene.add(label);
+        globeMesh.add(marker);  // Add to globe instead of scene
+        markers.push(marker);
+    });
+    
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 3, 5);
+    scene.add(directionalLight);
+    
+    camera.position.z = 15;
+    
+    // Rotation controls
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let rotation = { x: 0, y: 0 };
+    
+    renderer.domElement.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+    
+    renderer.domElement.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+            
+            rotation.y += deltaX * 0.005;
+            rotation.x += deltaY * 0.005;
+            
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        }
+    });
+    
+    renderer.domElement.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+    
+    // Click detection
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    
+    renderer.domElement.addEventListener('click', (event) => {
+        if (isDragging) return;
+        
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(markers);
+        
+        if (intersects.length > 0) {
+            const country = intersects[0].object.userData.country;
+            selectCountry(country);
+        }
+    });
+    
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        if (!isDragging) {
+            rotation.y += 0.001;
+        }
+        
+        globeMesh.rotation.x = rotation.x;
+        globeMesh.rotation.y = rotation.y;
+        glow.rotation.x = rotation.x;
+        glow.rotation.y = rotation.y;
+        
+        renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    globe = { scene, markers, rotation };
+}
+
+function selectCountry(countryCode) {
+    if (!globe) return;
+    
+    currentSelectedCountry = countryCode;
+    
+    globe.markers.forEach(marker => {
+        if (marker.userData.country === countryCode) {
+            marker.material.color.setHex(0xd4906f);  // Orange when selected
+            marker.scale.set(1.5, 1.5, 1.5);
+                } else {
+                    marker.material.color.setHex(0x000000);  // Black when not selected
+                    marker.scale.set(1, 1, 1);
+                }
+});
+    
+    const dropdown = document.getElementById('countryDropdown');
+    const displayText = document.getElementById('selectedCountryDisplay');
+    
+    if (dropdown) dropdown.value = countryCode;
+    if (displayText) displayText.textContent = COUNTRY_POSITIONS[countryCode].name;
+}
+
+// Initialize globe when search section loads
+const originalLoadSearch = loadSearch;
+loadSearch = function() {
+    originalLoadSearch();
+    setTimeout(() => {
+        if (!globe) {
+            init3DGlobe();
+        }
+    }, 800);
+};
+
+// Dropdown sync
+document.addEventListener('DOMContentLoaded', () => {
+    const dropdown = document.getElementById('countryDropdown');
+    if (dropdown) {
+        dropdown.addEventListener('change', (e) => {
+            selectCountry(e.target.value);
+        });
+    }
+});
+// ===== TRIVIA GAME VARIABLES =====
+let triviaSettings = {
+    questionCount: 5,
+    difficulty: 'easy'
+};
+
+let quizState = {
+    questions: [],
+    currentQuestion: 0,
+    score: 0,
+    totalAnswered: 0
+};
+
+// ===== TRIVIA FUNCTIONS =====
+function loadTrivia() {
+    transitionToPage(() => {
+        hideAllSections();
+        document.getElementById('triviaSection').classList.add('active');
+        resetTriviaUI();
+    });
+}
+
+function resetTriviaUI() {
+    document.getElementById('triviaSetup').style.display = 'block';
+    document.getElementById('triviaQuiz').style.display = 'none';
+    document.getElementById('triviaResults').style.display = 'none';
+    document.getElementById('triviaBackButton').style.display = 'block';
+    document.getElementById('triviaMovieInput').value = '';
+}
+
+function selectQuestionCount(count) {
+    triviaSettings.questionCount = count;
+    document.querySelectorAll('.trivia-group:nth-child(2) .option-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    event.target.classList.add('selected');
+}
+
+function selectDifficulty(difficulty) {
+    triviaSettings.difficulty = difficulty;
+    document.querySelectorAll('.trivia-group:nth-child(3) .option-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    event.target.classList.add('selected');
+}
+
+async function startTrivia() {
+    const movieName = document.getElementById('triviaMovieInput').value.trim();
+    
+    if (!movieName) {
+        alert('Please enter a movie name!');
+        return;
+    }
+    
+    document.getElementById('triviaSetup').style.display = 'none';
+    document.getElementById('loadingSection').classList.add('active');
+    
+    try {
+        const response = await fetch('https://synapse-sxl8.onrender.com//trivia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                movieName,
+                questionCount: triviaSettings.questionCount,
+                difficulty: triviaSettings.difficulty
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to generate quiz');
+        }
+        
+        quizState.questions = result.questions;
+        quizState.currentQuestion = 0;
+        quizState.score = 0;
+        quizState.totalAnswered = 0;
+        
+        document.getElementById('loadingSection').classList.remove('active');
+        document.getElementById('triviaQuiz').style.display = 'block';
+        document.getElementById('triviaBackButton').style.display = 'none';
+        
+        displayQuestion();
+        
+    } catch (error) {
+        console.error(error);
+        alert(error.message || 'Failed to load quiz. Make sure the server is running.');
+        document.getElementById('loadingSection').classList.remove('active');
+        resetTriviaUI();
+    }
+}
+
+function displayQuestion() {
+    const q = quizState.questions[quizState.currentQuestion];
+    
+    document.getElementById('quizProgress').textContent = 
+        `Question ${quizState.currentQuestion + 1}/${quizState.questions.length}`;
+    document.getElementById('quizScore').textContent = 
+        `Score: ${quizState.score}/${quizState.totalAnswered}`;
+    
+    document.getElementById('questionImage').src = q.image;
+    document.getElementById('questionText').textContent = q.question;
+    
+    const optionsContainer = document.getElementById('answerOptions');
+    optionsContainer.innerHTML = '';
+    
+    q.options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.textContent = option;
+        btn.onclick = () => checkAnswer(index);
+        optionsContainer.appendChild(btn);
+    });
+    
+    document.getElementById('explanationBox').style.display = 'none';
+    document.getElementById('nextButton').style.display = 'none';
+}
+
+function checkAnswer(selectedIndex) {
+    const q = quizState.questions[quizState.currentQuestion];
+    const buttons = document.querySelectorAll('.answer-btn');
+    
+    buttons.forEach(btn => btn.disabled = true);
+    
+    quizState.totalAnswered++;
+    
+    if (selectedIndex === q.correctIndex) {
+        buttons[selectedIndex].classList.add('correct');
+        quizState.score++;
+    } else {
+        buttons[selectedIndex].classList.add('wrong');
+        buttons[q.correctIndex].classList.add('correct');
+    }
+    
+    const explanationBox = document.getElementById('explanationBox');
+    explanationBox.textContent = q.explanation;
+    explanationBox.style.display = 'block';
+    
+    document.getElementById('quizScore').textContent = 
+        `Score: ${quizState.score}/${quizState.totalAnswered}`;
+    
+    if (quizState.currentQuestion < quizState.questions.length - 1) {
+        document.getElementById('nextButton').style.display = 'block';
+    } else {
+        setTimeout(showResults, 2000);
+    }
+}
+
+function nextQuestion() {
+    quizState.currentQuestion++;
+    displayQuestion();
+}
+
+function showResults() {
+    document.getElementById('triviaQuiz').style.display = 'none';
+    document.getElementById('triviaResults').style.display = 'block';
+    document.getElementById('triviaBackButton').style.display = 'block';
+    
+    const percentage = (quizState.score / quizState.questions.length) * 100;
+    
+    document.getElementById('finalScore').textContent = 
+        `${quizState.score}/${quizState.questions.length}`;
+    
+    let message = '';
+    if (percentage === 100) message = '🏆 Perfect Score! Cinema Master!';
+    else if (percentage >= 80) message = '🌟 Excellent! You know your movies!';
+    else if (percentage >= 60) message = '👏 Good Job! Keep watching!';
+    else if (percentage >= 40) message = '📽️ Not bad! Room to improve!';
+    else message = '🎬 Keep learning! Movies are fun!';
+    
+    document.getElementById('resultsMessage').textContent = message;
+    document.getElementById('resultsDetails').textContent = 
+        `You got ${quizState.score} out of ${quizState.questions.length} questions correct (${percentage.toFixed(0)}%)`;
+}
+
+function resetTrivia() {
+    resetTriviaUI();
+}
+</script>
+</body>
+</html>
