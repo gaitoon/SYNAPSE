@@ -1202,11 +1202,12 @@ module.exports = app;
 
 // For local development only
 if (require.main === module) {
-  app.listen(PORT, () => {
+  app.listen(PORT,'0.0.0.0' () => {
     console.log(`🔥 UNIFIED Server - http://localhost:${PORT}`);
     console.log(`✅ Movies: TMDB Discovery with randomization`);
     console.log(`✅ Series: TMDB Discovery with randomization`);
     console.log(`✅ Music: TMDB Music Discovery with randomization`);
     console.log(`🧬 All use the SAME intelligent algorithm!`);
   });
+
 }
