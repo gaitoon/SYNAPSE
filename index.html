@@ -2031,7 +2031,7 @@ async function generateRecommendations() {
 
     setTimeout(async () => {
         try {
-            const response = await fetch('https://cinapse-backend.onrender.com//recommend', {
+            const response = await fetch('https://cinapse-backend.onrender.com/recommend', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mode, data })
@@ -2133,7 +2133,7 @@ async function loadArchive() {
     
     setTimeout(async () => {
         try {
-            const response = await fetch('https://cinapse-backend.onrender.com//archive');
+            const response = await fetch('https://cinapse-backend.onrender.com/archive');
             const result = await response.json();
             
             if (!result.success) {
@@ -2318,7 +2318,7 @@ async function searchByCountryYear() {
     
     setTimeout(async () => {
         try {
-            const response = await fetch('https://cinapse-backend.onrender.com//search-by-country', {
+            const response = await fetch('https://cinapse-backend.onrender.com/search-by-country', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ country, yearStart, yearEnd, type })
@@ -2366,7 +2366,7 @@ async function loadManifesto() {
     
     setTimeout(async () => {
         try {
-            const response = await fetch('https://cinapse-backend.onrender.com//news');
+            const response = await fetch('https://cinapse-backend.onrender.com/news');
             const result = await response.json();
             
             if (!result.success) {
@@ -2741,7 +2741,7 @@ async function startTrivia() {
     document.getElementById('loadingSection').classList.add('active');
     
     try {
-        const response = await fetch('https://cinapse-backend.onrender.com//trivia', {
+        const response = await fetch('https://cinapse-backend.onrender.com/trivia', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
