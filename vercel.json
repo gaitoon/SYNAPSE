@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server1.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/test",
+      "dest": "/server1.js"
+    },
+    {
+      "src": "/recommend",
+      "dest": "/server1.js"
+    },
+    {
+      "src": "/archive",
+      "dest": "/server1.js"
+    },
+    {
+      "src": "/search-by-country",
+      "dest": "/server1.js"
+    },
+    {
+      "src": "/news",
+      "dest": "/server1.js"
+    },
+    {
+      "src": "/trivia",
+      "dest": "/server1.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
